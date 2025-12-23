@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/shengda-ong/react-go-webdev/Server/MagicStreamMoviesServer/database"
 	"github.com/shengda-ong/react-go-webdev/Server/MagicStreamMoviesServer/models"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -13,6 +14,7 @@ import (
 )
 
 var movieCollection *mongo.Collection = database.OpenCollection("movies")
+var validate = validator.New()
 
 func GetMovies() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -77,6 +79,20 @@ func AddMovie() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid Input"})
 			return
 		}
+		// checks against validation tags in the model
+		if err := validate.Struct(movie); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Validation failed", "details": err.Error()})
+			return
+		}
+
+		result, err := movieCollection.InsertOne(ctx, movie)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add movie"})
+			return
+		}
+
+		c.JSON(http.StatusCreated, result)
 
 	}
 }
