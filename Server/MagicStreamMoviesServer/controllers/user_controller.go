@@ -51,7 +51,7 @@ func RegisterUser() gin.HandlerFunc {
 			return
 		}
 		if count > 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "User already exists"})
+			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 			return
 		}
 
